@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WorkoutPlanExercise extends Model
 {
@@ -15,4 +16,9 @@ class WorkoutPlanExercise extends Model
         'target_weight',
         'sort_order',
     ];
+
+    public function exercise(): BelongsTo
+    {
+        return $this->belongsTo(Exercise::class);
+    }
 }

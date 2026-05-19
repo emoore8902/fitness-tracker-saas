@@ -78,9 +78,46 @@ class DashboardController extends Controller
         });
 
         // --- Progress ---
-        // TODO: Implement once users have enough logged data to compare weights over time.
-        //       Will show improvement for the user's most-logged exercise.
-        $progress = null;
+        // Find the exercise the user has logged with weight data in the most distinct sessions (≥ 2)
+        $topExercise = DB::table('workout_log_exercises')
+            ->join('workout_logs', 'workout_log_exercises.workout_log_id', '=', 'workout_logs.id')
+            ->join('exercises', 'workout_log_exercises.exercise_id', '=', 'exercises.id')
+            ->where('workout_logs.user_id', $userId)
+            ->whereNotNull('workout_log_exercises.weight')
+            ->select('exercises.id', 'exercises.name')
+            ->selectRaw('COUNT(DISTINCT workout_logs.id) as session_count')
+            ->groupBy('exercises.id', 'exercises.name')
+            ->having('session_count', '>=', 2)
+            ->orderByDesc('session_count')
+            ->first();
+
+        if (!$topExercise) {
+            $progress = null;
+        } else {
+            $sessions = DB::table('workout_log_exercises')
+                ->join('workout_logs', 'workout_log_exercises.workout_log_id', '=', 'workout_logs.id')
+                ->where('workout_logs.user_id', $userId)
+                ->where('workout_log_exercises.exercise_id', $topExercise->id)
+                ->whereNotNull('workout_log_exercises.weight')
+                ->select('workout_logs.id')
+                ->selectRaw('MAX(workout_log_exercises.weight) as max_weight')
+                ->selectRaw('MIN(workout_logs.performed_at) as performed_at')
+                ->groupBy('workout_logs.id')
+                ->orderBy('performed_at')
+                ->get();
+
+            $earliest = $sessions->first();
+            $latest   = $sessions->last();
+            $change   = round((float) $latest->max_weight - (float) $earliest->max_weight, 1);
+
+            $progress = [
+                'exercise'        => $topExercise->name,
+                'starting_weight' => (float) $earliest->max_weight,
+                'latest_weight'   => (float) $latest->max_weight,
+                'change'          => $change,
+                'change_label'    => ($change >= 0 ? '+' : '') . $change . ' kg',
+            ];
+        }
 
         return response()->json([
             'stats' => [
@@ -91,6 +128,7 @@ class DashboardController extends Controller
             ],
             'recent_workouts' => $recentWorkouts,
             'weekly_activity' => $weeklyActivity,
+            'weekly_goal'     => $user->weekly_workout_goal ?? 3,
             'progress'        => $progress,
         ]);
     }

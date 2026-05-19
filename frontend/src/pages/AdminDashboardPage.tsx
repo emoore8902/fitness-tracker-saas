@@ -1,14 +1,32 @@
-import { Row, Col, Table } from 'react-bootstrap';
+import { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { Row, Col, Card } from 'react-bootstrap';
 import StatCard from '../components/StatCard';
-
-// TODO: Replace with real data from GET /api/admin/stats
-const recentUsers = [
-  { id: 1, name: 'Alice Johnson', email: 'alice@example.com', joined: '2026-05-10' },
-  { id: 2, name: 'Bob Smith', email: 'bob@example.com', joined: '2026-05-09' },
-  { id: 3, name: 'Carol White', email: 'carol@example.com', joined: '2026-05-08' },
-];
+import LoadingState from '../components/LoadingState';
+import ErrorState from '../components/ErrorState';
+import { getAdminStats } from '../api/adminApi';
+import type { AdminStats } from '../types';
 
 export default function AdminDashboardPage() {
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadStats = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getAdminStats();
+      setStats(data);
+    } catch {
+      setError('Failed to load admin stats. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadStats(); }, [loadStats]);
+
   return (
     <>
       <div className="mb-4">
@@ -16,42 +34,67 @@ export default function AdminDashboardPage() {
         <p className="text-muted small mb-0">Platform overview</p>
       </div>
 
-      {/* Platform Stats */}
-      <Row className="g-3 mb-4">
-        <Col xs={6} lg={3}>
-          <StatCard title="Total Users" value="—" variant="primary" />
-        </Col>
-        <Col xs={6} lg={3}>
-          <StatCard title="Total Workouts" value="—" variant="success" />
-        </Col>
-        <Col xs={6} lg={3}>
-          <StatCard title="Exercise Library" value="—" variant="info" />
-        </Col>
-        <Col xs={6} lg={3}>
-          <StatCard title="Active Plans" value="—" variant="warning" />
-        </Col>
-      </Row>
+      {loading && <LoadingState message="Loading platform stats…" />}
+      {!loading && error && <ErrorState message={error} onRetry={loadStats} />}
 
-      {/* Recent Registrations */}
-      <h5 className="fw-semibold mb-3">Recent Registrations</h5>
-      <Table responsive hover className="bg-white shadow-sm rounded">
-        <thead className="table-light">
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Joined</th>
-          </tr>
-        </thead>
-        <tbody>
-          {recentUsers.map((u) => (
-            <tr key={u.id}>
-              <td className="fw-semibold">{u.name}</td>
-              <td>{u.email}</td>
-              <td>{new Date(u.joined).toLocaleDateString()}</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      {!loading && !error && stats && (
+        <>
+          <Row className="g-3 mb-4">
+            <Col xs={6} lg={3}>
+              <StatCard
+                title="Total Users"
+                value={stats.total_users}
+                subtitle="Registered accounts"
+                variant="primary"
+              />
+            </Col>
+            <Col xs={6} lg={3}>
+              <StatCard
+                title="Total Workouts"
+                value={stats.total_workout_logs}
+                subtitle="Sessions logged"
+                variant="success"
+              />
+            </Col>
+            <Col xs={6} lg={3}>
+              <StatCard
+                title="Exercise Library"
+                value={stats.total_exercises}
+                subtitle="Global + custom"
+                variant="info"
+              />
+            </Col>
+            <Col xs={6} lg={3}>
+              <StatCard
+                title="Workout Plans"
+                value={stats.total_workout_plans}
+                subtitle="Across all users"
+                variant="warning"
+              />
+            </Col>
+          </Row>
+
+          {/* Quick Links */}
+          <h5 className="fw-semibold mb-3">Admin Sections</h5>
+          <Row className="g-3">
+            {[
+              { to: '/app/admin/users', icon: '👥', label: 'Manage Users', desc: 'View all registered users' },
+              { to: '/app/admin/categories', icon: '🏷️', label: 'Exercise Categories', desc: 'Add and manage categories' },
+              { to: '/app/admin/exercises', icon: '🏋️', label: 'Global Exercises', desc: 'Manage the exercise library' },
+            ].map((link) => (
+              <Col key={link.to} md={4}>
+                <Card as={Link} to={link.to} className="shadow-sm text-decoration-none h-100" style={{ color: 'inherit' }}>
+                  <Card.Body>
+                    <div className="fs-3 mb-2">{link.icon}</div>
+                    <Card.Title className="h6 mb-1">{link.label}</Card.Title>
+                    <p className="text-muted small mb-0">{link.desc}</p>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </>
+      )}
     </>
   );
 }

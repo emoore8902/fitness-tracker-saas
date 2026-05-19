@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Row, Col, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+// NOTE: Weights are stored as raw numbers; weight_unit is a display label only.
 import { getDashboard } from '../api/dashboardApi';
 import StatCard from '../components/StatCard';
 import LoadingState from '../components/LoadingState';
@@ -13,6 +14,7 @@ import type { DashboardData } from '../types';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const unit = user?.weight_unit ?? 'lbs';
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export default function DashboardPage() {
             <Col xs={6} lg={3}>
               <StatCard
                 title="Total Volume"
-                value={data.stats.total_volume_kg > 0 ? `${data.stats.total_volume_kg} kg` : '—'}
+                value={data.stats.total_volume_kg > 0 ? `${data.stats.total_volume_kg} ${unit}` : '—'}
                 subtitle="All time"
                 variant="success"
               />
@@ -130,7 +132,11 @@ export default function DashboardPage() {
                 </Card>
 
                 <WeeklyActivityChart activity={data.weekly_activity} />
-                <ProgressSummary workoutsThisWeek={data.stats.workouts_this_week} />
+                <ProgressSummary
+                  workoutsThisWeek={data.stats.workouts_this_week}
+                  weeklyGoal={data.weekly_goal ?? 3}
+                  progress={data.progress}
+                />
               </div>
             </Col>
           </Row>

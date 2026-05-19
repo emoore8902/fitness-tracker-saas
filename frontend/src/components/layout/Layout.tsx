@@ -6,7 +6,7 @@ export default function Layout() {
   return (
     <>
       <AppNavbar />
-      <Container>
+      <Container className="py-4">
         <Outlet />
       </Container>
     </>
