@@ -87,8 +87,8 @@ class DashboardController extends Controller
             ->select('exercises.id', 'exercises.name')
             ->selectRaw('COUNT(DISTINCT workout_logs.id) as session_count')
             ->groupBy('exercises.id', 'exercises.name')
-            ->having('session_count', '>=', 2)
-            ->orderByDesc('session_count')
+            ->havingRaw('COUNT(DISTINCT workout_logs.id) >= 2')
+            ->orderByRaw('COUNT(DISTINCT workout_logs.id) DESC')
             ->first();
 
         if (!$topExercise) {
