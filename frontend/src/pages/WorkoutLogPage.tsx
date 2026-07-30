@@ -115,16 +115,17 @@ export default function WorkoutLogPage() {
     }
 
     setPlanId(newPlanId);
-    const newRows = [...selected.exercises]
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-      .map((pe) => ({
-        exercise_id:      pe.exercise_id,
-        sets:             pe.sets          ?? '',
-        reps:             pe.reps          ?? '',
-        weight:           '',
-        duration_minutes: '' as const,
-        notes:            '',
-      }));
+    const newRows: WorkoutLogExercisePayload[] = [...selected.exercises]
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .map((pe) => ({
+          exercise_id: pe.exercise_id,
+          sets: pe.sets ?? '',
+          reps: pe.reps ?? '',
+          weight: '',
+          duration_minutes: '',
+          notes: '',
+        }));
+
     setRows(newRows.length > 0 ? newRows : [emptyExerciseRow()]);
   }
 
