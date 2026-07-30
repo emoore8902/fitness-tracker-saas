@@ -6,7 +6,7 @@ A production-deployed full-stack fitness tracker built with Laravel and React. U
 
 ## Live Demo
 
-**Application:** https://YOUR-VERCEL-URL.vercel.app
+**Application:** https://fitness-tracker-saas-one.vercel.app
 
 **API:** https://fitness-tracker-saas.onrender.com
 
