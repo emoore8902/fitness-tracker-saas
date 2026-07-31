@@ -15,7 +15,6 @@ A production-deployed full-stack fitness tracker built with Laravel and React. U
 | Role | Email | Password |
 |------|-------|----------|
 | User | `demo@example.com` | `password` |
-| Admin | `admin@example.com` | `password` |
 
 Feel free to explore the application using either demo account or register your own account.
 
